@@ -22,4 +22,9 @@ class MainActivity : AppCompatActivity() {
         val intent = Intent ( this, QuizActivity::class.java)
         startActivity(intent)
     }
+
+    fun onClickBtnHistory(view: View) {
+        val intent = Intent ( this, HistoricActivity::class.java)
+        startActivity(intent)
+    }
 }

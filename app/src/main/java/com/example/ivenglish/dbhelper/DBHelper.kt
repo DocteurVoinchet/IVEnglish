@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import com.example.ivenglish.dbhelper.import.importAll
 import com.example.ivenglish.model.Quiz
+import com.example.ivenglish.model.Score
 
 
 class DBHelper (context: Context):SQLiteOpenHelper(context,
@@ -17,26 +18,37 @@ class DBHelper (context: Context):SQLiteOpenHelper(context,
         private val DATABASE_VER = 1
         private val DATABASE_NAME = "EDMTDB.db"
 
-        //Table
+        //Table IV
         private val TABLE_NAME="Quiz"
         private val COL_ID="Id"
         private val COL_TRANSLATION="Translation"
         private val COL_VERB="Verb"
         private val COL_PRETERIT="Preterit"
         private val COL_PP="Pp"
+
+        //Table History
+        private val TABLE_HISTORY="History"
+        private val COL_HISTORY_ID="Id"
+        private val COL_HISTORY_SCORE="Score"
+        private val COL_HISTORY_TOTAL="Total"
+        private val COL_HISTORY_DATETIME="DateTime"
     }
     override fun onCreate(db: SQLiteDatabase?) {
         val CREATE_TABLE_QUERY: String = ("CREATE TABLE $TABLE_NAME ( $COL_ID INTEGER PRIMARY KEY, $COL_TRANSLATION TEXT, $COL_VERB  TEXT, $COL_PRETERIT TEXT, $COL_PP TEXT)")
         db!!.execSQL(CREATE_TABLE_QUERY);
+        val CREATE_TABLE_HISTORY_QUERY: String = ("CREATE TABLE $TABLE_HISTORY ( $COL_HISTORY_ID INTEGER PRIMARY KEY, $COL_HISTORY_SCORE INTEGER, $COL_HISTORY_TOTAL INTEGER, $COL_HISTORY_DATETIME  TEXT)")
+        db!!.execSQL(CREATE_TABLE_QUERY);
         importAll(this)
+        db!!.execSQL(CREATE_TABLE_HISTORY_QUERY);
     }
 
     override fun onUpgrade(db: SQLiteDatabase?, p1: Int, p2: Int) {
         db!!.execSQL("DROP TABLE IF EXISTS $TABLE_NAME")
+        db!!.execSQL("DROP TABLE IF EXISTS $TABLE_HISTORY")
         onCreate(db!!)
     }
 
-    //CRUD
+    //CRUD Quiz example : https://www.youtube.com/watch?v=VuK0c3esUJE
     val allQuiz:List<Quiz>
         get() {
             val listQuiz = ArrayList<Quiz>()
@@ -117,5 +129,55 @@ class DBHelper (context: Context):SQLiteOpenHelper(context,
         db.close()
     }
 
-    //todo:https://www.youtube.com/watch?v=VuK0c3esUJE
+    //CRUD Score
+    val allScore:List<Score>
+        get() {
+            val listScore = ArrayList<Score>()
+            val selectQuery = "SELECT * FROM $TABLE_HISTORY"
+            val db: SQLiteDatabase = this.writableDatabase
+            val cursor: Cursor = db.rawQuery(selectQuery, null)
+            if(cursor.moveToFirst()){
+                do{
+                    val score = Score()
+                    score.id = cursor.getInt(cursor.getColumnIndex(COL_ID))
+                    score.date = Score.stringToDate( cursor.getString(cursor.getColumnIndex(COL_TRANSLATION)))
+                    score.score = cursor.getInt(cursor.getColumnIndex(COL_VERB))
+                    score.total = cursor.getInt(cursor.getColumnIndex(COL_PRETERIT))
+
+                    listScore.add(score)
+                } while (cursor.moveToNext())
+            }
+            db.close()
+            return listScore
+        }
+
+    fun addScore(score: Score) {
+        val db = this.writableDatabase
+        val values = ContentValues()
+        values.put(COL_HISTORY_DATETIME, score.dateString())
+        values.put(COL_HISTORY_SCORE, score.score)
+        values.put(COL_HISTORY_TOTAL, score.total)
+
+        db.insert(TABLE_NAME, null, values)
+
+        db.close()
+    }
+
+    fun updateScore(score: Score): Int {
+        val db = this.writableDatabase
+        val values = ContentValues()
+        values.put(COL_HISTORY_ID, score.id)
+        values.put(COL_HISTORY_SCORE, score.score)
+        values.put(COL_HISTORY_TOTAL, score.total)
+        values.put(COL_HISTORY_DATETIME, score.dateString())
+
+        return db.update(TABLE_HISTORY, values, "$COL_HISTORY_ID=?", arrayOf(score.id.toString()))
+    }
+
+    fun deleteScore(score: Score) {
+        val db = this.writableDatabase
+
+        db.delete(TABLE_HISTORY, "$COL_HISTORY_ID=?", arrayOf(score.id.toString()))
+        db.close()
+    }
 }

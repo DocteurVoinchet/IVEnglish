@@ -22,11 +22,12 @@
         app:layout_constraintVertical_bias="0.306" />
 
     <Button
-        android:id="@+id/buttonScore"
+        android:id="@+id/buttonHistory"
         android:layout_width="200dp"
         android:layout_height="75dp"
         android:background="@android:color/holo_orange_light"
-        android:text="score"
+        android:onClick="onClickBtnHistory"
+        android:text="History"
         android:textColor="@android:color/background_light"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintHorizontal_bias="0.497"
